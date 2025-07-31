@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TempControl Pro - Monitoreo Inteligente Avanzado</title>
+    <style>
+        /* ESTILOS ORIGINALES SIN MODIFICAR */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            color: #333; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 20px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+            backdrop-filter: blur(10px);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: #0056b3; 
+            position: relative;
+        }
+        .header h1 { 
+            font-size: 2.8rem; 
+            margin-bottom: 10px; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .connected { background: #4CAF50; color: white; }
+        .disconnected { background: #F44336; color: white; }
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 30px; 
+        }
+        .card { 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 20px; 
+            padding: 30px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15); 
+            backdrop-filter: blur(15px); 
+            transition: all 0.3s ease; 
+            display: flex; 
+            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+        }
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .temp-display { text-align: center; margin-bottom: 25px; }
+        .temp-value { 
+            font-size: 3.5rem; 
+            font-weight: bold; 
+            color: #2196F3; 
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .temp-status { 
+            font-size: 1.2rem; 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            display: inline-block; 
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .status-normal { background: linear-gradient(45deg, #4CAF50, #66BB6A); color: white; }
+        .status-cooling { background: linear-gradient(45deg, #2196F3, #42A5F5); color: white; }
+        .status-warning { background: linear-gradient(45deg, #FF9800, #FFB74D); color: white; }
+        .status-critical { background: linear-gradient(45deg, #F44336, #EF5350); color: white; }
+        .fan-indicator { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 15px; 
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 15px;
+        }
+        .fan-icon { 
+            width: 50px; 
+            height: 50px; 
+            border: 4px solid #2196F3; 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fan-off { 
+            border-color: #ccc; 
+            animation: none;
+            opacity: 0.5;
+        }
+        .fan-status {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .fan-auto { color: #4CAF50; }
+        .fan-manual { color: #FF9800; }
+        .control-mode {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .mode-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        .chart-container { 
+            height: 250px; 
+            background: linear-gradient(135deg, #f5f5f5, #e8e8e8); 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #666;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ddd" opacity="0.3"/><circle cx="75" cy="75" r="1" fill="%23ccc" opacity="0.3"/></pattern></defs><rect width="100" height="20" fill="url(%23grain)"/></svg>') repeat;
+            opacity: 0.3;
+        }
+        .use-cases { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+            margin-top: 40px; 
+        }
+        .use-case { 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 25px; 
+            border-radius: 20px; 
+            text-align: center; 
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .use-case:hover { 
+            background: white; 
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .use-case-icon { font-size: 3rem; margin-bottom: 15px; }
+        .use-case h3 { color: #333; margin-bottom: 10px; font-size: 1.2rem; }
+        .use-case p { color: #666; font-size: 0.95rem; line-height: 1.4; }
+        .use-case .temp-range {
+            font-size: 0.85rem;
+            color: #2196F3;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            min-width: 120px;
+        }
+        .btn-primary { 
+            background: linear-gradient(45deg, #2196F3, #42A5F5); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+        .btn-secondary { 
+            background: linear-gradient(45deg, #6c757d, #8a8a8a); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        .btn-danger { 
+            background: linear-gradient(45deg, #f44336, #EF5350); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+        .btn-success { 
+            background: linear-gradient(45deg, #4CAF50, #66BB6A); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        .btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        .alert { 
+            background: linear-gradient(45deg, #FF9800, #FFB74D); 
+            color: white; 
+            padding: 18px; 
+            border-radius: 15px; 
+            margin-bottom: 25px; 
+            display: none;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+            font-weight: 500;
+        }
+        .footer { 
+            text-align: center; 
+            color: white; 
+            margin-top: 50px; 
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        .config-section { 
+            margin-bottom: 25px; 
+            padding-bottom: 25px; 
+            border-bottom: 2px solid #eee; 
+        }
+        .config-section:last-of-type { 
+            border-bottom: none; 
+            margin-bottom: 0; 
+            padding-bottom: 0; 
+        }
+        .config-section h3 { 
+            color: #4CAF50; 
+            margin-bottom: 20px; 
+            font-size: 1.4rem; 
+            text-align: center;
+            font-weight: 600;
+        }
+        .config-item { 
+            margin-bottom: 15px; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .config-item label { 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+            color: #555; 
+        }
+        .config-item input[type="number"], 
+        .config-item input[type="text"], 
+        .config-item input[type="password"], 
+        .config-item select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 10px; 
+            font-size: 1rem; 
+            background-color: #fcfcfc; 
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .config-item input:focus, 
+        .config-item select:focus { 
+            border-color: #2196F3; 
+            outline: none; 
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+            background-color: white;
+        }
+        .config-buttons { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 20px; 
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .wifi-list { 
+            max-height: 180px; 
+            overflow-y: auto; 
+            border: 2px solid #eee; 
+            border-radius: 12px; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            background-color: #f9f9f9; 
+        }
+        .wifi-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 0; 
+            border-bottom: 1px solid #eee; 
+        }
+        .wifi-item:last-child { border-bottom: none; }
+        .wifi-item span { 
+            font-size: 1rem; 
+            color: #444; 
+            font-weight: 500;
+        }
+        .wifi-item .btn-danger { 
+            padding: 6px 12px; 
+            font-size: 0.85rem;
+            min-width: auto;
+        }
+        .no-wifi-message { 
+            text-align: center; 
+            color: #888; 
+            font-style: italic; 
+            padding: 20px; 
+        }
+        .location-presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .preset-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .preset-btn:hover {
+            border-color: #2196F3;
+            background: #f0f8ff;
+        }
+        .preset-btn.active {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .status-item {
+            background: rgba(0,0,0,0.05);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .status-item strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.2rem; }
+            .temp-value { font-size: 2.8rem; }
+            .dashboard { grid-template-columns: 1fr; }
+            .controls, .config-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; margin-bottom: 10px; }
+            .connection-status { position: static; margin-bottom: 15px; }
+            .container { margin: 10px; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div id="connectionStatus" class="connection-status connected">🟢 Conectado</div>
+            <h1>🌡️ TempControl Pro</h1>
+            <p>Sistema Inteligente de Monitoreo de Temperatura Avanzado</p>
+            <p>ID de Usuario: <span id="displayUserId">Cargando...</span></p>
+        </div>
+        
+        <div id="alert" class="alert">
+            ⚠️ Temperatura fuera del rango normal
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h2>🌡️ Control de Temperatura</h2>
+                <div class="temp-display">
+                    <div id="temperatura" class="temp-value">--°C</div>
+                    <div id="status" class="temp-status status-normal">Cargando...</div>
+                </div>                                
+                <div class="fan-indicator">
+                    <div id="fanIcon" class="fan-icon fan-off"></div>
+                    <div>
+                        <div id="ventilador" class="fan-status">Ventilador: Apagado</div>
+                        <div id="Modo" class="fan-status">Modo: Automático</div>
+                    </div>
+                </div>
+                
+                <div class="control-mode">
+                    <button class="mode-btn active" onclick="setFanMode('auto')">Automático</button>
+                    <button class="mode-btn" onclick="setFanMode('manual')">Manual</button>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" id="manualFanBtn" onclick="toggleFan()" disabled>Control Manual</button>
+                    <button class="btn btn-secondary" onclick="refreshData()">Actualizar</button>
+                    <button class="btn btn-success" onclick="simulateTemperature()">Simular Temp</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ Configuración Inteligente</h2>
+                <div class="config-section">
+                    <h3>Ubicación y Parámetros</h3>
+                    <div class="config-item">
+                        <label for="location-select">Selecciona la Ubicación:</label>
+                        <select id="location-select">
+                            <option value="home">🏠 Hogar / Habitación</option>
+                            <option value="cold-room">❄️ Cámaras Frigoríficas</option>
+                            <option value="hospital">🏥 Hospitales</option>
+                            <option value="pharmacy">💊 Farmacias</option>
+                            <option value="laboratory">🧪 Laboratorios</option>
+                            <option value="greenhouse">🌱 Invernaderos</option>
+                            <option value="transport-habitat">🚛 Transporte / Hábitats</option>
+                            <option value="winery">🍷 Bodega</option>
+                            <option value="data-center">💻 Centro de Datos</option>
+                            <option value="food-storage">🥫 Almacén de Alimentos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="location-presets" id="locationPresets">
+                        <!-- Los presets se generarán dinámicamente -->
+                    </div>
+                    
+                    <div class="config-item">
+                        <label for="min-temp">Temperatura Mínima (°C):</label>
+                        <input type="number" id="min-temp" value="20" step="0.1">
+                    </div>
+                    <div class="config-item">
+                        <label for="max-temp">Temperatura Máxima (°C):</label>
+                        <input type="number" id="max-temp" value="25" step="0.1">
+                    </div>
+                    <div class="config-buttons">
+                        <button class="btn btn-primary" id="save-temp-params">💾 Guardar Parámetros</button>
+                        <button class="btn btn-secondary" onclick="resetToDefaults()">🔄 Restaurar</button>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h3>📶 Redes WiFi</h3>
+                    <div class="wifi-list" id="wifi-list">
+                        <p class="no-wifi-message">No hay redes WiFi guardadas.</p>
+                    </div>
+                    <div class="config-item">
+                        <label for="new-wifi-ssid">Nombre de Red (SSID):</label>
+                        <input type="text" id="new-wifi-ssid" placeholder="Ej: MiRedHogar">
+                    </div>
+                    <div class="config-item">
+                        <label for="new-wifi-password">Contraseña:</label>
+                        <input type="password" id="new-wifi-password" placeholder="********">
+                    </div>
+                    <div class="config-buttons">
+                        <button class="btn btn-success" id="add-wifi">➕ Añadir Red</button>
+                        <button class="btn btn-secondary" onclick="scanWifi()">🔍 Escanear</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Estado del Sistema</h2>
+                <div class="chart-container">
+                    <p>📈 Gráfico de tendencia en tiempo real<br><small>Próximamente con histórico completo</small></p>
+                </div>
+                <div class="status-info">
+                    <div class="status-item">
+                        <strong>Rango Configurado</strong>
+                        <span><span id="display-min-temp">--</span>°C - <span id="display-max-temp">--</span>°C</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Última Actualización</strong>
+                        <span id="lastUpdate">--</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Estado del Sistema</strong>
+                        <span id="systemStatus" style="color: #4CAF50;">🟢 Conectado</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Bot Telegram</strong>
+                        <span style="color: #2196F3;">🤖 Activo</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Ubicación Actual</strong>
+                        <span id="currentLocation">🏠 Hogar</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>Modo Ventilador</strong>
+                        <span id="displayFanMode">🤖 Automático</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+                       
+        <div class="use-cases">
+            <div class="use-case">
+                <div class="use-case-icon">🏠</div>
+                <h3>Hogar Inteligente</h3>
+                <p>Monitoreo de temperatura ambiente y control automático de climatización</p>
+                <div class="temp-range">Rango: 20°C a 25°C</div>
+            </div>                                
+            <div class="use-case">
+                <div class="use-case-icon">🧪</div>
+                <h3>Laboratorio</h3>
+                <p>Control preciso de temperatura para muestras químicas y experimentos</p>
+                <div class="temp-range">Rango: 18°C a 22°C</div>
+            </div>  
+            <div class="use-case">
+                <div class="use-case-icon">❄️</div>
+                <h3>Camara Frigoríficas</h3>
+                <p>Carnes u alimentos que requieran refrigeracion o congelacion</p>
+                <div class="temp-range">Rango: 0°C a 5 °C</div>
+            </div>  
+            <div class="use-case">
+                <div class="use-case-icon">🌱</div>
+                <h3>Invernadero</h3>
+                <p>Optimización del crecimiento de plantas mediante control climático</p>
+                <div class="temp-range">Rango: 22°C a 28°C</div>
+            </div>                                
+            <div class="use-case">
+                <div class="use-case-icon">💊</div>
+                <h3>Farmacia</h3>
+                <p>Conservación de medicamentos que requieren temperatura controlada</p>
+                <div class="temp-range">Rango: 15°C a 25°C</div>
+            </div>                                
+            <div class="use-case">
+                <div class="use-case-icon">🍷</div>
+                <h3>Bodega</h3>
+                <p>Control de temperatura y humedad para conservación de vinos</p>
+                <div class="temp-range">Rango: 12°C a 18°C</div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-icon">🚛 </div>
+                <h3>Transporte de animales o alimentos </h3>
+                <p>Control de temperatura para el transaldo de animales u alimentos por carretera </p>
+                <div class="temp-range">Rango: 18°C a 26°C</div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-icon">🏥</div>
+                <h3>Hospital </h3>
+                <p>mantenimiento de buenas condiciones termicas en un hospital </p>
+                <div class="temp-range">Rango: 20°C a 24°C</div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-icon">💻 </div>
+                <h3>Centro de datos </h3>
+                <p>cPrevencion de sobrecalentamiento de equipos </p>
+                <div class="temp-range">Rango: 18°C a 26°C</div>
+            </div>
+            <div class="use-case">
+                <div class="use-case-icon">🥫</div>
+                <h3>Almacenamiento de alimentos</h3>
+                <p>Conservacion segun el tipo de alimentos</p>
+                <div class="temp-range">Rango: 15°C a 20°C</div>
+            </div>        
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 TempControl Pro - Sistema Avanzado de Monitoreo Inteligente</p>
+            <p>Desarrollado usando Vercel, GitHub y Firebase</p>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Importaciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+        import { 
+            getDatabase, 
+            ref, 
+            onValue, 
+            set, 
+            update,
+            get,
+            child
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { 
+            getAuth, 
+            signInAnonymously,
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTZBWaiLd4-yQyQ00pVy41KQM7AgUGOY",
+            authDomain: "control-de-temperatura-2bff2.firebaseapp.com",
+            databaseURL: "https://control-de-temperatura-2bff2-default-rtdb.firebaseio.com",
+            projectId: "control-de-temperatura-2bff2",
+            storageBucket: "control-de-temperatura-2bff2.appspot.com",
+            messagingSenderId: "387473482266",
+            appId: "1:387473482266:web:a42b9932c5a3b57125e7a3",
+            measurementId: "G-2Z1RGMLBV4"
+        };
+
+        // Inicialización de Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        console.log("🚀 Firebase inicializado correctamente");
+
+        // Variables globales
+        let currentUserId;
+        let sensorDataRef;
+        let configRef;
+        let currentModo = 'auto';
+        let autoControlInterval;
+
+        // Presets de temperatura
+        const locationPresets = {
+            'home': { min: 20, max: 25, name: '🏠 Hogar', description: 'Temperatura confortable para vivir' },
+            'cold-room': { min: -2, max: 4, name: '❄️ Cámara Fría', description: 'Conservación de alimentos perecederos' },
+            'hospital': { min: 20, max: 24, name: '🏥 Hospital', description: 'Ambiente hospitalario controlado' },
+            'pharmacy': { min: 15, max: 25, name: '💊 Farmacia', description: 'Conservación de medicamentos' },
+            'laboratory': { min: 18, max: 22, name: '🧪 Laboratorio', description: 'Condiciones precisas para experimentos' },
+            'greenhouse': { min: 22, max: 28, name: '🌱 Invernadero', description: 'Crecimiento óptimo de plantas' },
+            'transport-habitat': { min: 18, max: 26, name: '🚛 Transporte', description: 'Transporte seguro de seres vivos' },
+            'winery': { min: 12, max: 18, name: '🍷 Bodega', description: 'Conservación de vinos' },
+            'data-center': { min: 18, max: 24, name: '💻 Centro de Datos', description: 'Refrigeración de servidores' },
+            'food-storage': { min: 5, max: 15, name: '🥫 Almacén de Alimentos', description: 'Conservación general de alimentos' }
+        };
+
+        // Elementos del DOM
+        const temperatureElement = document.getElementById('temperatura');
+        const statusElement = document.getElementById('status');
+        const fanIcon = document.getElementById('fanIcon');
+        const fanStatusElement = document.getElementById('ventilador');
+        const fanModeElement = document.getElementById('Modo');
+        const minTempInput = document.getElementById('min-temp');
+        const maxTempInput = document.getElementById('max-temp');
+        const locationSelect = document.getElementById('location-select');
+        const displayMinTemp = document.getElementById('display-min-temp');
+        const displayMaxTemp = document.getElementById('display-max-temp');
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        const alertElement = document.getElementById('alert');
+        const wifiListElement = document.getElementById('wifi-list');
+        const newWifiSsidInput = document.getElementById('new-wifi-ssid');
+        const newWifiPasswordInput = document.getElementById('new-wifi-password');
+        const displayUserIdElement = document.getElementById('displayUserId');
+        const connectionStatusElement = document.getElementById('connectionStatus');
+        const systemStatusElement = document.getElementById('systemStatus');
+        const currentLocationElement = document.getElementById('currentLocation');
+        const displayFanModeElement = document.getElementById('displayFanMode');
+        const manualFanBtn = document.getElementById('manualFanBtn');
+        const locationPresetsContainer = document.getElementById('locationPresets');
+
+        // Función para inicializar Firebase
+        async function initializeAuthAndRealtimeDB() {
+            try {
+                await signInAnonymously(auth);
+                console.log("✅ Autenticación anónima exitosa");
+
+                currentUserId = auth.currentUser.uid;
+                console.log("👤 User ID:", currentUserId);
+                
+                // Crear referencias a Firebase
+                sensorDataRef = ref(db, 'sensores/datosActuales');
+                configRef = ref(db, `configuraciones/${currentUserId}`);
+                
+                // Actualizar estado de conexión
+                updateConnectionStatus(true);
+                
+                // Cargar configuración inicial
+                await loadInitialConfig();
+                setupRealtimeListeners();
+                initializeLocationPresets();
+                startAutoControl();
+
+            } catch (error) {
+                console.error("❌ Error durante la inicialización:", error);
+                updateConnectionStatus(false);
+                showAlert(`Error de conexión: ${error.message}`);
+            }
+        }
+
+        // Función para actualizar estado de conexión
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                connectionStatusElement.textContent = '🟢 Conectado';
+                connectionStatusElement.className = 'connection-status connected';
+                systemStatusElement.innerHTML = '🟢 Conectado';
+                systemStatusElement.style.color = '#4CAF50';
+            } else {
+                connectionStatusElement.textContent = '🔴 Desconectado';
+                connectionStatusElement.className = 'connection-status disconnected';
+                systemStatusElement.innerHTML = '🔴 Desconectado';
+                systemStatusElement.style.color = '#F44336';
+            }
+        }
+
+        // Función para mostrar alertas
+        function showAlert(message) {
+            alertElement.innerHTML = `⚠️ ${message}`;
+            alertElement.style.display = 'block';
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Inicializar presets de ubicación
+        function initializeLocationPresets() {
+            locationPresetsContainer.innerHTML = '';
+            Object.entries(locationPresets).forEach(([key, preset]) => {
+                const presetBtn = document.createElement('div');
+                presetBtn.className = 'preset-btn';
+                presetBtn.innerHTML = `
+                    <div style="font-weight: 600;">${preset.name}</div>
+                    <div style="font-size: 0.8rem; color: #666;">${preset.min}°C - ${preset.max}°C</div>
+                `;
+                presetBtn.addEventListener('click', () => applyLocationPreset(key));
+                locationPresetsContainer.appendChild(presetBtn);
+            });
+        }
+
+        // Aplicar preset de ubicación
+        async function applyLocationPreset(locationKey) {
+            const preset = locationPresets[locationKey];
+            if (preset) {
+                // Cargar configuración guardada
+                const savedConfig = await loadLocationConfig(locationKey);
+                
+                if (savedConfig) {
+                    minTempInput.value = savedConfig.min;
+                    maxTempInput.value = savedConfig.max;
+                } else {
+                    minTempInput.value = preset.min;
+                    maxTempInput.value = preset.max;
+                }
+                
+                locationSelect.value = locationKey;
+                
+                // Actualizar estado visual
+                document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.closest('.preset-btn').classList.add('active');
+                
+                // Guardar automáticamente
+                await saveTemperatureParams();
+                
+                showAlert(`Configuración cargada para ${preset.name}: ${minTempInput.value}°C - ${maxTempInput.value}°C`);
+            }
+        }
+
+        // Cargar configuración de ubicación
+        async function loadLocationConfig(locationKey) {
+            if (!configRef) return null;
+            
+            try {
+                const snapshot = await get(child(configRef, 'locationConfigs'));
+                if (snapshot.exists()) {
+                    const locationConfigs = snapshot.val();
+                    return locationConfigs[locationKey] || null;
+                }
+            } catch (error) {
+                console.error("❌ Error al cargar configuración de ubicación:", error);
+            }
+            return null;
+        }
+
+        // FUNCIÓN UPDATEUI CORREGIDA - ESTA ERA LA PRINCIPAL CAUSA DEL PROBLEMA
+        function updateUI(sensorData, configData) {
+            console.log("🔄 Actualizando UI con datos:", { sensorData, configData });
+            
+            // Resetear clases de estado
+            statusElement.className = 'temp-status';
+            
+            // Si no hay datos, mostrar estado por defecto
+            if (!sensorData || Object.keys(sensorData).length === 0) {
+                resetUIToDefault();
+                return;
+            }
+
+            // Actualizar temperatura - CORREGIDO: usar la clave correcta
+            const currentTemp = sensorData.temperatura !== undefined ? sensorData.temperatura : '--';
+            temperatureElement.textContent = `${currentTemp}°C`;
+            
+            // Cargar configuración de ubicación
+            const currentLocation = (configData && configData.location) || 'home';
+            const locationConfigs = (configData && configData.locationConfigs) || {};
+            const locationConfig = locationConfigs[currentLocation];
+            
+            let minTemp, maxTemp;
+            if (locationConfig) {
+                minTemp = locationConfig.min;
+                maxTemp = locationConfig.max;
+            } else {
+                // Usar preset por defecto si no hay configuración
+                const preset = locationPresets[currentLocation];
+                minTemp = preset ? preset.min : 20;
+                maxTemp = preset ? preset.max : 25;
+            }
+            
+            updateTemperatureStatus(currentTemp, minTemp, maxTemp);
+
+            // Actualizar estado del ventilador - CORREGIDO: usar la clave correcta
+            const ventiladorOn = sensorData.Ventilador === "ON";
+            updateFanDisplay(ventiladorOn);
+
+            // Actualizar modo del ventilador
+            currentModo = (configData && configData.fanMode) || 'auto';
+            updateFanModeDisplay();
+
+            // Actualizar parámetros de configuración
+            minTempInput.value = minTemp;
+            maxTempInput.value = maxTemp;
+            locationSelect.value = currentLocation;
+
+            displayMinTemp.textContent = minTemp;
+            displayMaxTemp.textContent = maxTemp;
+
+            // Actualizar ubicación actual
+            const locationName = locationPresets[currentLocation]?.name || '🏠 Hogar';
+            currentLocationElement.textContent = locationName;
+
+            // Actualizar última actualización
+            if (sensorData.lastUpdate) {
+                const date = new Date(sensorData.lastUpdate);
+                lastUpdateElement.textContent = date.toLocaleString();
+            } else {
+                lastUpdateElement.textContent = 'N/A';
+            }
+
+            // Actualizar lista de WiFi
+            const wifiNetworks = (configData && configData.wifiNetworks) || [];
+            renderWifiList(wifiNetworks);
+
+            // Control automático del ventilador
+            if (currentModo === 'auto' && currentTemp !== '--') {
+                autoFanControl(parseFloat(currentTemp), minTemp, maxTemp);
+            }
+
+            // Actualizar preset activo
+            updateActivePreset(currentLocation);
+        }
+
+        // Restablecer UI a valores por defecto
+        function resetUIToDefault() {
+            temperatureElement.textContent = '--°C';
+            statusElement.textContent = 'Sin datos';
+            statusElement.className = 'temp-status status-normal';
+            updateFanDisplay(false);
+            minTempInput.value = 20;
+            maxTempInput.value = 25;
+            locationSelect.value = 'home';
+            displayMinTemp.textContent = '--';
+            displayMaxTemp.textContent = '--';
+            lastUpdateElement.textContent = 'N/A';
+            currentLocationElement.textContent = '🏠 Hogar';
+            renderWifiList([]);
+            alertElement.style.display = 'none';
+        }
+
+        // Actualizar estado de temperatura
+        function updateTemperatureStatus(temp, min, max) {
+            // Limpiar clases previas
+            statusElement.className = 'temp-status';
+            
+            // Agregar validación más robusta
+            if (temp === '--' || temp === undefined || temp === null) {
+                statusElement.textContent = 'Sin datos disponibles';
+                statusElement.classList.add('status-normal');
+                return;
+            }
+
+            const currentTempNum = parseFloat(temp);
+            const minTempNum = parseFloat(min);
+            const maxTempNum = parseFloat(max);
+
+            if (currentTempNum < minTempNum) {
+                statusElement.textContent = '🥶 Por debajo del mínimo';
+                statusElement.classList.add('status-cooling');
+                showAlert(`Temperatura muy baja: ${currentTempNum}°C (Mín: ${minTempNum}°C)`);
+            } else if (currentTempNum > maxTempNum) {
+                statusElement.textContent = '🔥 Por encima del máximo';
+                statusElement.classList.add('status-critical');
+                showAlert(`Temperatura muy alta: ${currentTempNum}°C (Máx: ${maxTempNum}°C)`);
+            } else if (currentTempNum >= minTempNum && currentTempNum <= maxTempNum) {
+                statusElement.textContent = '✅ Temperatura Normal';
+                statusElement.classList.add('status-normal');
+                alertElement.style.display = 'none';
+            } else {
+                statusElement.textContent = '⚠️ Estado Indeterminado';
+                statusElement.classList.add('status-warning');
+                showAlert('Estado de temperatura indeterminado');
+            }
+        }
+
+        // Actualizar display del ventilador
+        function updateFanDisplay(fanOn) {
+            if (fanOn) {
+                fanIcon.classList.remove('fan-off');
+                fanStatusElement.textContent = '🌪️ Ventilador: Encendido';
+                fanStatusElement.style.color = '#4CAF50';
+            } else {
+                fanIcon.classList.add('fan-off');
+                fanStatusElement.textContent = '🍃 Ventilador: Apagado';
+                fanStatusElement.style.color = '#666';
+            }
+        }
+
+        // Actualizar display del modo del ventilador
+        function updateFanModeDisplay() {
+            if (currentModo === 'auto') {
+                fanModeElement.textContent = '🤖 Modo: Automático';
+                fanModeElement.className = 'fan-status fan-auto';
+                displayFanModeElement.innerHTML = '🤖 Automático';
+                manualFanBtn.disabled = true;
+                manualFanBtn.textContent = 'Modo Automático';
+                
+                // Actualizar botones de modo
+                document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.mode-btn[onclick="setFanMode(\'auto\')"]').classList.add('active');
+            } else {
+                fanModeElement.textContent = '👤 Modo: Manual';
+                fanModeElement.className = 'fan-status fan-manual';
+                displayFanModeElement.innerHTML = '👤 Manual';
+                manualFanBtn.disabled = false;
+                manualFanBtn.textContent = 'Control Manual';
+                
+                // Actualizar botones de modo
+                document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.mode-btn[onclick="setFanMode(\'manual\')"]').classList.add('active');
+            }
+        }
+
+        // Actualizar preset activo
+        function updateActivePreset(currentLocation) {
+            document.querySelectorAll('.preset-btn').forEach((btn, index) => {
+                btn.classList.remove('active');
+                if (Object.keys(locationPresets)[index] === currentLocation) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Control automático del ventilador
+        function autoFanControl(currentTemp, minTemp, maxTemp) {
+            if (currentModo !== 'auto' || !sensorDataRef) return;
+
+            const shouldTurnOn = currentTemp >= maxTemp;
+            const shouldTurnOff = currentTemp <= minTemp;
+
+            // Solo actualizar si hay un cambio necesario
+            get(sensorDataRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const currentFanState = data.Ventilador === "ON";
+                    let newFanState = currentFanState;
+
+                    if (shouldTurnOn && !currentFanState) {
+                        newFanState = true;
+                        console.log(`🤖 Auto: Encendiendo ventilador - Temp: ${currentTemp}°C >= ${maxTemp}°C`);
+                    } else if (shouldTurnOff && currentFanState) {
+                        newFanState = false;
+                        console.log(`🤖 Auto: Apagando ventilador - Temp: ${currentTemp}°C <= ${minTemp}°C`);
+                    }
+
+                    if (newFanState !== currentFanState) {
+                        update(sensorDataRef, {
+                            Ventilador: newFanState ? "ON" : "OFF",
+                            lastUpdate: new Date().toISOString(),
+                            autoControlActive: true
+                        }).catch(error => {
+                            console.error("❌ Error en control automático:", error);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Iniciar control automático
+        function startAutoControl() {
+            autoControlInterval = setInterval(() => {
+                if (currentModo === 'auto' && sensorDataRef) {
+                    get(sensorDataRef).then(snapshot => {
+                        if (snapshot.exists()) {
+                            const data = snapshot.val();
+                            const currentTemp = data.temperatura;
+                            if (currentTemp !== undefined && currentTemp !== '--') {
+                                // Obtener configuración actual para los límites
+                                get(configRef).then(configSnapshot => {
+                                    if (configSnapshot.exists()) {
+                                        const configData = configSnapshot.val();
+                                        const currentLocation = configData.location || 'home';
+                                        const locationConfigs = configData.locationConfigs || {};
+                                        const locationConfig = locationConfigs[currentLocation];
+                                        
+                                        let minTemp, maxTemp;
+                                        if (locationConfig) {
+                                            minTemp = locationConfig.min;
+                                            maxTemp = locationConfig.max;
+                                        } else {
+                                            const preset = locationPresets[currentLocation];
+                                            minTemp = preset ? preset.min : 20;
+                                            maxTemp = preset ? preset.max : 25;
+                                        }
+                                        
+                                        autoFanControl(parseFloat(currentTemp), minTemp, maxTemp);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }, 10000);
+        }
+
+        // Renderizar lista de WiFi
+        function renderWifiList(wifiNetworks) {
+            wifiListElement.innerHTML = '';
+            if (!wifiNetworks || wifiNetworks.length === 0) {
+                const noWifiMessage = document.createElement('p');
+                noWifiMessage.classList.add('no-wifi-message');
+                noWifiMessage.textContent = 'No hay redes WiFi guardadas.';
+                wifiListElement.appendChild(noWifiMessage);
+            } else {
+                wifiNetworks.forEach(network => {
+                    const wifiItem = document.createElement('div');
+                    wifiItem.classList.add('wifi-item');
+                    wifiItem.innerHTML = `
+                        <span>📶 ${network.ssid}</span>
+                        <button class="btn btn-danger btn-small" data-ssid="${network.ssid}">🗑️ Eliminar</button>
+                    `;
+                    wifiListElement.appendChild(wifiItem);
+                });
+            }
+        }
+
+        // Cargar configuración inicial
+        async function loadInitialConfig() {
+            try {
+                // Cargar datos del sensor
+                const sensorSnapshot = await get(sensorDataRef);
+                const sensorData = sensorSnapshot.exists() ? sensorSnapshot.val() : {};
+                
+                // Cargar configuración
+                const configSnapshot = await get(configRef);
+                let configData = {};
+                
+                if (configSnapshot.exists()) {
+                    configData = configSnapshot.val();
+                    console.log("📋 Configuración inicial cargada:", configData);
+                } else {
+                    console.log("🆕 Creando configuración por defecto");
+                    configData = {
+                        fanMode: 'auto',
+                        location: 'home',
+                        locationConfigs: {
+                            'home': { min: 20, max: 25, lastModified: new Date().toISOString() }
+                        },
+                        wifiNetworks: [],
+                        autoControlActive: true
+                    };
+                    await set(configRef, configData);
+                }
+                
+                // Actualizar UI con los datos
+                updateUI(sensorData, configData);
+            } catch (error) {
+                console.error("❌ Error al cargar configuración inicial:", error);
+                updateConnectionStatus(false);
+                showAlert(`Error al cargar configuración: ${error.message}`);
+            }
+        }
+
+        // Configurar listeners en tiempo real
+        function setupRealtimeListeners() {
+            // Listener para datos del sensor
+            onValue(sensorDataRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const sensorData = snapshot.val();
+                    console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
+        
+                    // Obtener configuración actual
+                    get(configRef).then(configSnapshot => {
+                        const configData = configSnapshot.exists() ? configSnapshot.val() : {};
+                        updateUI(sensorData, configData);
+                        updateConnectionStatus(true);
+                    });
+                } else {
+                    console.log("📭 Datos de sensor no disponibles");
+                    updateUI({}, {});
+                    updateConnectionStatus(false);
+                }
+            }, (error) => {
+                console.error("❌ Error en listener de sensor:", error);
+                updateConnectionStatus(false);
+                showAlert(`Error en actualización de sensor: ${error.message}`);
+            });
+
+            // Listener para configuración
+            onValue(configRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const configData = snapshot.val();
+                    console.log("🔄 Actualización de configuración en tiempo real:", configData);
+                    
+                    // Obtener datos de sensor actuales
+                    get(sensorDataRef).then(sensorSnapshot => {
+                        const sensorData = sensorSnapshot.exists() ? sensorSnapshot.val() : {};
+                        updateUI(sensorData, configData);
+                        updateConnectionStatus(true);
+                    });
+                } else {
+                    console.log("📭 Configuración no disponible");
+                    updateUI({}, {});
+                    updateConnectionStatus(false);
+                }
+            }, (error) => {
+                console.error("❌ Error en listener de configuración:", error);
+                updateConnectionStatus(false);
+                showAlert(`Error en actualización de configuración: ${error.message}`);
+            });
+        }
+
+        // Función para cambiar modo del ventilador
+        window.setFanMode = async (mode) => {
+            if (!configRef) return;
+
+            try {
+                currentModo = mode;
+                await update(configRef, {
+                    fanMode: mode,
+                    lastUpdate: new Date().toISOString()
+                });
+                updateFanModeDisplay();
+                console.log(`🔧 Modo del ventilador cambiado a: ${mode}`);
+                
+                if (mode === 'auto') {
+                    showAlert('Modo automático activado');
+                } else {
+                    showAlert('Modo manual activado');
+                }
+            } catch (error) {
+                console.error("❌ Error al cambiar modo del ventilador:", error);
+                showAlert(`Error al cambiar modo: ${error.message}`);
+            }
+        };
+
+        // Función para alternar ventilador manualmente
+        window.toggleFan = async () => {
+            if (!sensorDataRef || currentModo === 'auto') return;
+
+            try {
+                const snapshot = await get(sensorDataRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const currentFanState = data.Ventilador === "ON";
+                    await update(sensorDataRef, {
+                        Ventilador: !currentFanState ? "ON" : "OFF",
+                        lastUpdate: new Date().toISOString(),
+                        autoControlActive: false
+                    });
+                    console.log(`👤 Control manual: Ventilador ${!currentFanState ? 'encendido' : 'apagado'}`);
+                }
+            } catch (error) {
+                console.error("❌ Error al controlar ventilador manualmente:", error);
+                showAlert(`Error al controlar ventilador: ${error.message}`);
+            }
+        };
+
+        // Función para actualizar datos manualmente
+        window.refreshData = async () => {
+            if (!sensorDataRef) return;
+
+            try {
+                await update(sensorDataRef, {
+                    lastUpdate: new Date().toISOString()
+                });
+                console.log("🔄 Datos actualizados manualmente");
+                showAlert('Datos actualizados correctamente');
+            } catch (error) {
+                console.error("❌ Error al actualizar datos:", error);
+                showAlert(`Error al actualizar: ${error.message}`);
+            }
+        };
+
+        // Función para guardar parámetros de temperatura
+        async function saveTemperatureParams() {
+            if (!configRef) return;
+
+            try {
+                const minTemp = parseFloat(minTempInput.value);
+                const maxTemp = parseFloat(maxTempInput.value);
+                const location = locationSelect.value;
+
+                if (minTemp >= maxTemp) {
+                    showAlert('La temperatura mínima debe ser menor que la máxima');
+                    return;
+                }
+
+                // Obtener configuraciones existentes
+                const snapshot = await get(configRef);
+                let configData = {};
+                if (snapshot.exists()) {
+                    configData = snapshot.val();
+                }
+                
+                // Actualizar configuración
+                const locationConfigs = configData.locationConfigs || {};
+                locationConfigs[location] = {
+                    min: minTemp,
+                    max: maxTemp,
+                    lastModified: new Date().toISOString()
+                };
+
+                await update(configRef, {
+                    location: location,
+                    locationConfigs: locationConfigs,
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                console.log(`💾 Parámetros guardados para ${locationPresets[location]?.name}: ${minTemp}°C - ${maxTemp}°C`);
+                showAlert(`Configuración guardada para ${locationPresets[location]?.name}: ${minTemp}°C - ${maxTemp}°C`);
+            } catch (error) {
+                console.error("❌ Error al guardar parámetros:", error);
+                showAlert(`Error al guardar: ${error.message}`);
+            }
+        }
+
+        // Restablecer a valores por defecto
+        window.resetToDefaults = async () => {
+            if (!configRef) return;
+
+            try {
+                const location = locationSelect.value;
+                const preset = locationPresets[location];
+                
+                minTempInput.value = preset.min;
+                maxTempInput.value = preset.max;
+                
+                // Obtener configuraciones existentes
+                const snapshot = await get(configRef);
+                let configData = {};
+                if (snapshot.exists()) {
+                    configData = snapshot.val();
+                }
+                
+                // Restablecer configuración
+                const locationConfigs = configData.locationConfigs || {};
+                locationConfigs[location] = {
+                    min: preset.min,
+                    max: preset.max,
+                    lastModified: new Date().toISOString()
+                };
+                
+                await update(configRef, {
+                    locationConfigs: locationConfigs,
+                    fanMode: 'auto',
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                showAlert(`Configuración de ${preset.name} restablecida a valores por defecto: ${preset.min}°C - ${preset.max}°C`);
+            } catch (error) {
+                console.error("❌ Error al restablecer:", error);
+                showAlert(`Error al restablecer: ${error.message}`);
+            }
+        };
+
+        // Escanear WiFi (simulado)
+        window.scanWifi = () => {
+            showAlert('Escaneando redes WiFi disponibles...');
+        };
+
+        // Simular temperatura
+        window.simulateTemperature = async () => {
+            try {
+                const randomTemp = (Math.random() * 10 + 20).toFixed(1);
+                await update(sensorDataRef, {
+                    temperatura: parseFloat(randomTemp),
+                    lastUpdate: new Date().toISOString()
+                });
+                showAlert(`Temperatura simulada: ${randomTemp}°C`);
+            } catch (error) {
+                console.error("❌ Error al simular temperatura:", error);
+                showAlert(`Error al simular: ${error.message}`);
+            }
+        };
+
+        // Event Listeners
+        document.getElementById('save-temp-params').addEventListener('click', saveTemperatureParams);
+
+        // Agregar red WiFi
+        document.getElementById('add-wifi').addEventListener('click', async () => {
+            if (!configRef) return;
+
+            const ssid = newWifiSsidInput.value.trim();
+            const password = newWifiPasswordInput.value.trim();
+
+            if (!ssid || !password) {
+                showAlert('SSID y contraseña son requeridos');
+                return;
+            }
+
+            try {
+                const snapshot = await get(configRef);
+                let configData = {};
+                if (snapshot.exists()) {
+                    configData = snapshot.val();
+                }
+                
+                const wifiNetworks = configData.wifiNetworks || [];
+                
+                if (!wifiNetworks.some(net => net.ssid === ssid)) {
+                    wifiNetworks.push({ ssid: ssid, password: password });
+                    await update(configRef, {
+                        wifiNetworks: wifiNetworks,
+                        lastUpdate: new Date().toISOString()
+                    });
+                    console.log(`📶 Red WiFi añadida: ${ssid}`);
+                    newWifiSsidInput.value = '';
+                    newWifiPasswordInput.value = '';
+                    showAlert(`Red "${ssid}" añadida correctamente`);
+                } else {
+                    showAlert(`La red "${ssid}" ya existe`);
+                }
+            } catch (error) {
+                console.error("❌ Error al añadir WiFi:", error);
+                showAlert(`Error al añadir WiFi: ${error.message}`);
+            }
+        });
+
+        // Eliminar red WiFi
+        wifiListElement.addEventListener('click', async (event) => {
+            if (!configRef || !event.target.classList.contains('btn-danger')) return;
+
+            const ssidToRemove = event.target.dataset.ssid;
+            try {
+                const snapshot = await get(configRef);
+                if (snapshot.exists()) {
+                    const configData = snapshot.val();
+                    const wifiNetworks = configData.wifiNetworks || [];
+                    const updatedWifiNetworks = wifiNetworks.filter(net => net.ssid !== ssidToRemove);
+
+                    await update(configRef, {
+                        wifiNetworks: updatedWifiNetworks,
+                        lastUpdate: new Date().toISOString()
+                    });
+                    console.log(`🗑️ Red WiFi eliminada: ${ssidToRemove}`);
+                    showAlert(`Red "${ssidToRemove}" eliminada`);
+                }
+            } catch (error) {
+                console.error("❌ Error al eliminar WiFi:", error);
+                showAlert(`Error al eliminar WiFi: ${error.message}`);
+            }
+        });
+
+        // Mostrar ID de usuario
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                displayUserIdElement.textContent = user.uid.substring(0, 8) + '...';
+            } else {
+                displayUserIdElement.textContent = 'No autenticado';
+            }
+        });
+
+        // Actualizar al cambiar ubicación
+        locationSelect.addEventListener('change', async () => {
+            const selectedLocation = locationSelect.value;
+            const preset = locationPresets[selectedLocation];
+            if (preset){
+                if (savedConfig) {
+                    minTempInput.value = savedConfig.min;
+                    maxTempInput.value = savedConfig.max;
+                    showAlert(`Configuración cargada para ${preset.name}: ${savedConfig.min}°C - ${savedConfig.max}°C`);
+                } else {
+                    minTempInput.value = preset.min;
+                    maxTempInput.value = preset.max;
+                    showAlert(`Usando configuración por defecto para ${preset.name}: ${preset.min}°C - ${preset.max}°C`);
+                }
+                
+                // Actualizar ubicación en Firebase
+                if (configRef) {
+                    try {
+                        await update(configRef, {
+                            location: selectedLocation,
+                            lastUpdate: new Date().toISOString()
+                        });
+                    } catch (error) {
+                        console.error("❌ Error al cambiar ubicación:", error);
+                    }
+                }
+                
+                // Actualizar preset
+                updateActivePreset(selectedLocation);
+            }
+        });
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initializeAuthAndRealtimeDB);
+
+        // Limpiar intervalos al cerrar
+        window.addEventListener('beforeunload', () => {
+            if (autoControlInterval) {
+                clearInterval(autoControlInterval);
+            }
+        });
+
+    </script>
+</body>
+</html>
