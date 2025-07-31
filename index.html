@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -419,14 +420,14 @@
             <div class="card">
                 <h2>🌡️ Control de Temperatura</h2>
                 <div class="temp-display">
-                    <div id="temperature" class="temp-value">--°C</div>
+                    <div id="temperatura" class="temp-value">--°C</div>
                     <div id="status" class="temp-status status-normal">Cargando...</div>
                 </div>                                
                 <div class="fan-indicator">
                     <div id="fanIcon" class="fan-icon fan-off"></div>
                     <div>
-                        <div id="fanStatus" class="fan-status">Ventilador: Apagado</div>
-                        <div id="fanMode" class="fan-auto">Modo: Automático</div>
+                        <div id="ventilador" class="ventilador">Ventilador: Apagado</div>
+                        <div id="Modo" class="modo">Modo: Automático</div>
                     </div>
                 </div>
                 
@@ -646,7 +647,7 @@
         let currentUserId;
         let sensorDataRef;
         let configRef;
-        let currentFanMode = 'auto';
+        let currentmodo = 'auto';
         let autoControlInterval;
 
         // Presets de temperatura
@@ -668,7 +669,7 @@
         const statusElement = document.getElementById('status');
         const fanIcon = document.getElementById('fanIcon');
         const fanStatusElement = document.getElementById('fanStatus');
-        const fanModeElement = document.getElementById('fanMode');
+        const fanModeElement = document.getElementById('ventilador');
         const minTempInput = document.getElementById('min-temp');
         const maxTempInput = document.getElementById('max-temp');
         const locationSelect = document.getElementById('location-select');
@@ -683,7 +684,7 @@
         const connectionStatusElement = document.getElementById('connectionStatus');
         const systemStatusElement = document.getElementById('systemStatus');
         const currentLocationElement = document.getElementById('currentLocation');
-        const displayFanModeElement = document.getElementById('displayFanMode');
+        const displayFanModeElement = document.getElementById('displayventilador');
         const manualFanBtn = document.getElementById('manualFanBtn');
         const locationPresetsContainer = document.getElementById('locationPresets');
 
@@ -798,7 +799,7 @@
             }
             return null;
         }
-
+//cambiar desde aqui
         // Función para actualizar UI con los datos
         function updateUI(sensorData, configData) {
             // Combinar datos de forma segura
@@ -830,12 +831,12 @@
             updateTemperatureStatus(currentTemp, minTemp, maxTemp);
 
             // Actualizar estado del ventilador
-            const fanOn = data.fanOn !== undefined ? data.fanOn : false;
+            const ventiladorOn = data.ventiladorOn !== undefined ? data.ventiladorOn : false;
             updateFanDisplay(fanOn);
 
             // Actualizar modo del ventilador
-            currentFanMode = data.fanMode || 'auto';
-            updateFanModeDisplay();
+            currentModo = data.modo || 'auto';
+            anModeDisplay();
 
             // Actualizar parámetros de configuración
             minTempInput.value = minTemp;
@@ -862,7 +863,7 @@
             renderWifiList(wifiNetworks);
 
             // Control automático del ventilador
-            if (currentFanMode === 'auto' && currentTemp !== '--') {
+            if (currentModo === 'auto' && currentTemp !== '--') {
                 autoFanControl(parseFloat(currentTemp), minTemp, maxTemp);
             }
 
@@ -971,7 +972,7 @@
 
         // Control automático del ventilador
         function autoFanControl(currentTemp, minTemp, maxTemp) {
-            if (currentFanMode !== 'auto' || !sensorDataRef) return;
+            if (currentModo !== 'auto' || !sensorDataRef) return;
 
             const shouldTurnOn = currentTemp >= maxTemp;
             const shouldTurnOff = currentTemp <= minTemp;
@@ -1086,12 +1087,13 @@
                 if (snapshot.exists()) {
                     const sensorData = snapshot.val();
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
+        
                     
                     // Actualizar temperatura inmediatamente
-                    temperatureElement.textContent = `${sensorData.currentTemperature || '--'}°C`;
+                    temperatureElement.textContent = `${sensorData.temperatura || '--'}°C`;
                     
                     // Actualizar estado del ventilador
-                    updateFanDisplay(sensorData.fanOn || false);
+                    updateFanDisplay(sensorData.Ventilador === "ON");
                     
                     // Obtener configuración actual
                     get(configRef).then(configSnapshot => {
@@ -1111,7 +1113,7 @@
             });
 
             // Listener para configuración
-            onValue(configRef, (snapshot) => {
+            lue(configRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const configData = snapshot.val();
                     console.log("🔄 Actualización de configuración en tiempo real:", configData);
@@ -1123,7 +1125,7 @@
                         updateConnectionStatus(true);
                     });
                 } else {
-                    console.log("📭 Configuración no disponible");
+                    console.lonVaog("📭 Configuración no disponible");
                     updateUI({}, null);
                     updateConnectionStatus(false);
                 }
