@@ -1086,6 +1086,7 @@
             onValue(sensorDataRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const sensorData = snapshot.val();
+                    console.log(snapshot.exists());
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
         
                     
