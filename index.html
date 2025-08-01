@@ -813,7 +813,6 @@
             // Combinar datos de forma segura
             const data = {
                 ...(sensorData || {}),
-                ...(configData || {})
             };
 
             // Actualizar temperatura
@@ -1109,7 +1108,7 @@
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
         
                     // Actualizar temperatura inmediatamente
-                    temperatureElement.textContent = `${sensorData.temperatura || 'Aqui deberia ir la temperatura'}°C`;
+                    temperatureElement.textContent = `${sensorData.temperatura || '--'}°C`;
                     
                     // Actualizar estado del ventilador
                     const fanState = sensorData.ventiladorOn === "true" || sensorData.ventiladorOn === true;
