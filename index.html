@@ -817,7 +817,7 @@
             };
 
             // Actualizar temperatura
-            const currentTemp = data.Temperatura !== undefined ? data.Temperatura : '--';
+            const currentTemp = data.temperatura !== undefined ? data.temperatura : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
             
             // Cargar configuración de ubicación
@@ -1109,7 +1109,7 @@
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
         
                     // Actualizar temperatura inmediatamente
-                    temperatureElement.textContent = `${sensorData.temperatura || '--'}°C`;
+                    temperatureElement.textContent = `${sensorData.temperatura || 'Aqui deberia ir la temperatura'}°C`;
                     
                     // Actualizar estado del ventilador
                     const fanState = sensorData.ventiladorOn === "true" || sensorData.ventiladorOn === true;
