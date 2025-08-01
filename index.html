@@ -817,7 +817,7 @@
             };
 
             // Actualizar temperatura
-            const currentTemp = data.currentTemperature !== undefined ? data.currentTemperature : '--';
+            const currentTemp = data.Temperatura !== undefined ? data.Temperatura : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
             
             // Cargar configuración de ubicación
@@ -832,15 +832,16 @@
             } else {
                 // Usar preset por defecto si no hay configuración
                 const preset = locationPresets[currentLocation];
-                minTemp = preset ? preset.min : 20;
-                maxTemp = preset ? preset.max : 25;
+                minTemp = preset ? preset.min : 25;
+                maxTemp = preset ? preset.max : 28;
             }
             
             updateTemperatureStatus(currentTemp, minTemp, maxTemp);
 
             // Actualizar estado del ventilador
-            const fanOn = data.ventiladorOn !== undefined ? data.ventiladorOn : false;
+            const fanOn = data.ventiladorOn === "true" || data.ventiladorOn === true;
             updateFanDisplay(fanOn);
+
 
             // Actualizar modo del ventilador
             currentFanMode = data.fanMode || 'auto';
@@ -860,12 +861,23 @@
 
             // Actualizar última actualización
             if (data.lastUpdate) {
-                const date = new Date(data.lastUpdate);
-                lastUpdateElement.textContent = date.toLocaleString();
-            } else {
-                lastUpdateElement.textContent = 'N/A';
-            }
-
+        // Si viene de Arduino (millis), convertir a fecha legible
+                let date;
+                if (typeof data.lastUpdate === 'string' && data.lastUpdate.includes('T')) {
+                   // Formato ISO de JavaScript
+                  date = new Date(data.lastUpdate);
+                } else {
+                   // Millis de Arduino - convertir a fecha actual
+                 date = new Date();
+        }
+        lastUpdateElement.textContent = date.toLocaleString();
+    } else {
+        lastUpdateElement.textContent = 'N/A';
+    }
+     if (data.sensaciontermica !== undefined) {
+        console.log(`🌡️ Sensación térmica: ${data.sensaciontermica}°C`);
+        // Aquí podrías mostrarla en un elemento de la UI si lo deseas
+    }
             // Actualizar lista de WiFi
             const wifiNetworks = data.wifiNetworks || [];
             renderWifiList(wifiNetworks);
@@ -1100,8 +1112,9 @@
                     temperatureElement.textContent = `${sensorData.temperatura || '--'}°C`;
                     
                     // Actualizar estado del ventilador
-                    updateFanDisplay(sensorData.Ventilador === "ON");
-                    
+                    const fanState = sensorData.ventiladorOn === "true" || sensorData.ventiladorOn === true;
+                    updateFanDisplay(fanState);
+        
                     // Obtener configuración actual
                     get(configRef).then(configSnapshot => {
                         const configData = configSnapshot.exists() ? configSnapshot.val() : {};
