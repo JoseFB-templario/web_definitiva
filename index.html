@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TempControl Pro - Monitoreo Inteligente Avanzado</title>
     <style>
-        /* ESTILOS ORIGINALES SIN MODIFICAR */
+        /* Estilos previos (sin cambios) */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
@@ -101,6 +101,17 @@
         .status-cooling { background: linear-gradient(45deg, #2196F3, #42A5F5); color: white; }
         .status-warning { background: linear-gradient(45deg, #FF9800, #FFB74D); color: white; }
         .status-critical { background: linear-gradient(45deg, #F44336, #EF5350); color: white; }
+        
+        /* NUEVO ESTILO PARA DATOS ADICIONALES */
+        .additional-data {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
         .fan-indicator { 
             display: flex; 
             align-items: center; 
@@ -399,6 +410,10 @@
             .btn { width: 100%; margin-bottom: 10px; }
             .connection-status { position: static; margin-bottom: 15px; }
             .container { margin: 10px; padding: 15px; }
+            .additional-data {
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -419,8 +434,13 @@
             <div class="card">
                 <h2>🌡️ Control de Temperatura</h2>
                 <div class="temp-display">
-                    <div id="temperatura" class="temp-value">-Nada de nada °C</div>
+                    <div id="temperatura" class="temp-value">--°C</div>
                     <div id="status" class="temp-status status-normal">Cargando...</div>
+                    <!-- NUEVOS ELEMENTOS PARA HUMEDAD Y SENSACION TERMICA -->
+                    <div class="additional-data">
+                        <div>💧 Humedad: <span id="humedad">--%</span></div>
+                        <div>🔥 Sensación Térmica: <span id="sensacionTermica">--°C</span></div>
+                    </div>
                 </div>                                
                 <div class="fan-indicator">
                     <div id="fanIcon" class="fan-icon fan-off"></div>
@@ -693,7 +713,10 @@
         const displayFanModeElement = document.getElementById('displayFanMode');
         const manualFanBtn = document.getElementById('manualFanBtn');
         const locationPresetsContainer = document.getElementById('locationPresets');
-        const arduinoStatusElement = document.getElementById('arduinoStatus'); // Nuevo elemento
+        const arduinoStatusElement = document.getElementById('arduinoStatus');
+        // Nuevos elementos para humedad y sensación térmica
+        const humedadElement = document.getElementById('humedad');
+        const sensacionTermicaElement = document.getElementById('sensacionTermica');
 
         // Función para inicializar Firebase
         async function initializeAuthAndRealtimeDB() {
@@ -813,11 +836,22 @@
             // Combinar datos de forma segura
             const data = {
                 ...(sensorData || {}),
+                ...(configData || {})
             };
 
-            // Actualizar temperatura
-            const currentTemp = data.temperatura !== undefined ? data.temperatura : '--';
+            // Actualizar temperatura - CORRECCIÓN: Verificar correctamente los datos
+            const currentTemp = data.currentTemperature !== undefined && data.currentTemperature !== null 
+                ? data.currentTemperature 
+                : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
+            
+            // Actualizar humedad y sensación térmica - CORRECCIÓN: Verificar datos
+            humedadElement.textContent = data.humedad !== undefined && data.humedad !== null 
+                ? `${data.humedad}%` 
+                : '--%';
+            sensacionTermicaElement.textContent = data.sensacionTermica !== undefined && data.sensacionTermica !== null 
+                ? `${data.sensacionTermica}°C` 
+                : '--°C';
             
             // Cargar configuración de ubicación
             const currentLocation = data.location || 'home';
@@ -831,16 +865,15 @@
             } else {
                 // Usar preset por defecto si no hay configuración
                 const preset = locationPresets[currentLocation];
-                minTemp = preset ? preset.min : 25;
-                maxTemp = preset ? preset.max : 28;
+                minTemp = preset ? preset.min : 20;
+                maxTemp = preset ? preset.max : 25;
             }
             
             updateTemperatureStatus(currentTemp, minTemp, maxTemp);
 
             // Actualizar estado del ventilador
-            const fanOn = data.ventiladorOn === "true" || data.ventiladorOn === true;
+            const fanOn = data.ventiladorOn !== undefined ? data.ventiladorOn : false;
             updateFanDisplay(fanOn);
-
 
             // Actualizar modo del ventilador
             currentFanMode = data.fanMode || 'auto';
@@ -860,23 +893,12 @@
 
             // Actualizar última actualización
             if (data.lastUpdate) {
-        // Si viene de Arduino (millis), convertir a fecha legible
-                let date;
-                if (typeof data.lastUpdate === 'string' && data.lastUpdate.includes('T')) {
-                   // Formato ISO de JavaScript
-                  date = new Date(data.lastUpdate);
-                } else {
-                   // Millis de Arduino - convertir a fecha actual
-                 date = new Date();
-        }
-        lastUpdateElement.textContent = date.toLocaleString();
-    } else {
-        lastUpdateElement.textContent = 'N/A';
-    }
-     if (data.sensaciontermica !== undefined) {
-        console.log(`🌡️ Sensación térmica: ${data.sensaciontermica}°C`);
-        // Aquí podrías mostrarla en un elemento de la UI si lo deseas
-    }
+                const date = new Date(data.lastUpdate);
+                lastUpdateElement.textContent = date.toLocaleString();
+            } else {
+                lastUpdateElement.textContent = 'N/A';
+            }
+
             // Actualizar lista de WiFi
             const wifiNetworks = data.wifiNetworks || [];
             renderWifiList(wifiNetworks);
@@ -895,6 +917,8 @@
             temperatureElement.textContent = '--°C';
             statusElement.textContent = 'Sin datos';
             statusElement.className = 'temp-status status-normal';
+            humedadElement.textContent = '--%';
+            sensacionTermicaElement.textContent = '--°C';
             updateFanDisplay(false);
             minTempInput.value = 20;
             maxTempInput.value = 25;
@@ -1090,7 +1114,7 @@
                     await set(configRef, configData);
                 }
                 
-                // Actualizar UI con los datos
+                // Actualizar UI con los datos - CORRECCIÓN: Pasar ambos objetos
                 updateUI(sensorData, configData);
             } catch (error) {
                 console.error("❌ Error al cargar configuración inicial:", error);
@@ -1107,22 +1131,15 @@
                     const sensorData = snapshot.val();
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
         
-                    // Actualizar temperatura inmediatamente
-                    temperatureElement.textContent = `${sensorData.temperatura || '--'}°C`;
-                    
-                    // Actualizar estado del ventilador
-                    const fanState = sensorData.ventiladorOn === "true" || sensorData.ventiladorOn === true;
-                    updateFanDisplay(fanState);
-        
                     // Obtener configuración actual
                     get(configRef).then(configSnapshot => {
                         const configData = configSnapshot.exists() ? configSnapshot.val() : {};
-                        updateUI(sensorData, configData);
+                        updateUI(sensorData, configData); // CORRECCIÓN: Pasar ambos objetos
                         updateConnectionStatus(true);
                     });
                 } else {
                     console.log("📭 Datos de sensor no disponibles");
-                    updateUI({}, {});
+                    updateUI({}, {}); // CORRECCIÓN: Pasar objetos vacíos
                     updateConnectionStatus(false);
                 }
             }, (error) => {
@@ -1140,12 +1157,12 @@
                     // Obtener datos de sensor actuales
                     get(sensorDataRef).then(sensorSnapshot => {
                         const sensorData = sensorSnapshot.exists() ? sensorSnapshot.val() : {};
-                        updateUI(sensorData, configData);
+                        updateUI(sensorData, configData); // CORRECCIÓN: Pasar ambos objetos
                         updateConnectionStatus(true);
                     });
                 } else {
                     console.log("📭 Configuración no disponible");
-                    updateUI({}, null);
+                    updateUI({}, {}); // CORRECCIÓN: Pasar objetos vacíos
                     updateConnectionStatus(false);
                 }
             }, (error) => {
