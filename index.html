@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -439,7 +440,7 @@
                     <!-- NUEVOS ELEMENTOS PARA HUMEDAD Y SENSACION TERMICA -->
                     <div class="additional-data">
                         <div>💧 Humedad: <span id="humedad">--%</span></div>
-                        <div>🔥 Sensación Térmica: <span id="sensacionTermica">--°C</span></div>
+                        <div>🔥 Sensación Térmica: <span id="sensaciontermica">--°C</span></div>
                     </div>
                 </div>                                
                 <div class="fan-indicator">
@@ -716,7 +717,7 @@
         const arduinoStatusElement = document.getElementById('arduinoStatus');
         // Nuevos elementos para humedad y sensación térmica
         const humedadElement = document.getElementById('humedad');
-        const sensacionTermicaElement = document.getElementById('sensacionTermica');
+        const sensacionTermicaElement = document.getElementById('sensaciontermica');
 
         // Función para inicializar Firebase
         async function initializeAuthAndRealtimeDB() {
@@ -840,8 +841,8 @@
             };
 
             // Actualizar temperatura - CORRECCIÓN: Verificar correctamente los datos
-            const currentTemp = data.currentTemperature !== undefined && data.currentTemperature !== null 
-                ? data.currentTemperature 
+            const currentTemp = data.temperatura !== undefined && data.temperature !== null 
+                ? data.currenttemperature 
                 : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
             
@@ -849,8 +850,8 @@
             humedadElement.textContent = data.humedad !== undefined && data.humedad !== null 
                 ? `${data.humedad}%` 
                 : '--%';
-            sensacionTermicaElement.textContent = data.sensacionTermica !== undefined && data.sensacionTermica !== null 
-                ? `${data.sensacionTermica}°C` 
+            sensacionTermicaElement.textContent = data.sensaciontermica !== undefined && data.sensaciontermica !== null 
+                ? `${data.sensaciontermica}°C` 
                 : '--°C';
             
             // Cargar configuración de ubicación
@@ -918,7 +919,7 @@
             statusElement.textContent = 'Sin datos';
             statusElement.className = 'temp-status status-normal';
             humedadElement.textContent = '--%';
-            sensacionTermicaElement.textContent = '--°C';
+            sensaciontermicaElement.textContent = '--°C';
             updateFanDisplay(false);
             minTempInput.value = 20;
             maxTempInput.value = 25;
@@ -1055,7 +1056,7 @@
                     get(sensorDataRef).then(snapshot => {
                         if (snapshot.exists()) {
                             const data = snapshot.val();
-                            const currentTemp = data.currentTemperature;
+                            const currentTemp = data.temperatura;
                             if (currentTemp !== undefined && currentTemp !== '--') {
                                 autoFanControl(parseFloat(currentTemp), data.minTemperature, data.maxTemperature);
                             }
