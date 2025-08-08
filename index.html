@@ -651,14 +651,14 @@
 
         // Configuración de Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCUTZBWaiLd4-yQyQ00pVy41KQM7AgUGOY",
-            authDomain: "control-de-temperatura-2bff2.firebaseapp.com",
-            databaseURL: "https://control-de-temperatura-2bff2-default-rtdb.firebaseio.com",
+            apiKey: "A/tu clave de API aquí",
+            authDomain: "/rellenar con el dominio de autenticación",
+            databaseURL: "/rellenar con la URL de tu base de datos",
             projectId: "control-de-temperatura-2bff2",
-            storageBucket: "control-de-temperatura-2bff2.appspot.com",
+            storageBucket: "/rellenar con el bucket de almacenamiento",
             messagingSenderId: "387473482266",
-            appId: "1:387473482266:web:a42b9932c5a3b57125e7a3",
-            measurementId: "G-2Z1RGMLBV4"
+            appId: "1:387473482266:web:3c4f5b6d7e8f9a0b1c2d3e",
+            measurementId: "G-1234567890"
         };
 
         // Inicialización de Firebase
@@ -841,8 +841,8 @@
             };
 
             // Actualizar temperatura - CORRECCIÓN: Verificar correctamente los datos
-            const currentTemp = data.temperatura !== undefined && data.temperature !== null 
-                ? data.currenttemperature 
+            const currentTemp = data.temperatura !== undefined && data.temperatura !== null 
+                ? data.temperatura 
                 : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
             
