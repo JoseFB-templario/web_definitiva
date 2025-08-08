@@ -9,10 +9,10 @@
 #include <ArduinoJson.h>
 
 // --- Definiciones de Pines y Constantes ---
-#define BOT_TOKEN "7743362544:AAHwpjIuVw1EWBoOgb7PniKxLZhpJeLAbKM"
-#define CHAT_ID "6392502255"
-#define FIREBASE_HOST "control-de-temperatura-2bff2-default-rtdb.firebaseio.com"
-#define FIREBASE_AUTH "9zLe0flWYtx75M3hdcSde2JWK02JG1IUarZodZ1q"
+#define BOT_TOKEN "/rellenar con tu bot_token"
+#define CHAT_ID "/rellenar con tu chad ID"
+#define FIREBASE_HOST "/rellenar con tu host de firebase"
+#define FIREBASE_AUTH "/rellenar con los datos correctos"
 
 #define DHTPIN 5
 #define DHTTYPE DHT22
@@ -38,7 +38,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // --- Variables Globales ---
 bool modoManual = false, ventiladorOn = false, conectado = false, enAP = false, conectarNueva = false;
-bool tieneInternet = false; // Nueva variable para verificar internet
+bool tieneInternet = false; //variable para verificar internet
 float t = 0, h = 0, tf = 0;
 float minTemp = 20.0, maxTemp = 25.0;  // Valores por defecto
 float lastT = -999, lastH = -999, lastTf = -999;
@@ -55,14 +55,14 @@ unsigned long lastInternetCheck = 0; // Última verificación de internet
 unsigned long lastReconnectAttempt = 0; // Último intento de reconexión
 unsigned long lastConfigCheck = 0;
 
-// *** VARIABLES DE ESCANEO CORREGIDAS ***
+// VARIABLES DE ESCANEO ***
 bool redesEscaneadas = false;
 int numeroRedes = 0;
 String redes[20]; // Almacenar hasta 20 redes
 int senales[20];
 int encriptaciones[20];
 
-// --- HTML Templates CORREGIDOS ---
+// --- HTML Templates
 const char AP_HTML_ROOT[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -621,7 +621,7 @@ bool conectarGuardadas() {
     return false;
 }
 
-// *** FUNCIÓN CORREGIDA PARA ESCANEAR REDES SINCRÓNICAMENTE ***
+// ESCANEAR REDES SINCRÓNICAMENTE ***
 void escanearRedes() {
     Serial.println("=== INICIANDO ESCANEO SINCRÓNICO DE REDES ===");
     
@@ -655,7 +655,7 @@ void escanearRedes() {
     Serial.println("=== ESCANEO COMPLETADO ===");
 }
 
-// *** FUNCIÓN CORREGIDA PARA CONSTRUIR LISTA DE REDES ***
+// *** FUNCIÓN PARA CONSTRUIR LISTA DE REDES ***
 String construirListaRedes() {
     String lista = "";
     
@@ -702,7 +702,7 @@ String construirListaRedes() {
     return lista;
 }
 
-// *** FUNCIÓN CORREGIDA PARA INICIAR AP ***
+// *** FUNCIÓN PARA INICIAR AP ***
 void iniciarAP() {
     Serial.println("=== INICIANDO MODO AP POR 2 MINUTOS ===");
     
@@ -1033,7 +1033,7 @@ void procesarTelegram() {
     }
 }
 
-// --- FUNCIÓN CORREGIDA PARA LEER CONFIGURACIÓN FIREBASE ---
+// --- FUNCIÓN PARA LEER CONFIGURACIÓN FIREBASE ---
 void leerConfiguracionFirebase() {
     if (!conectado || !tieneInternet) return;
     
