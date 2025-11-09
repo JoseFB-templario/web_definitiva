@@ -437,7 +437,6 @@
                 <div class="temp-display">
                     <div id="temperatura" class="temp-value">--°C</div>
                     <div id="status" class="temp-status status-normal">Cargando...</div>
-                    <!-- NUEVOS ELEMENTOS PARA HUMEDAD Y SENSACION TERMICA -->
                     <div class="additional-data">
                         <div>💧 Humedad: <span id="humedad">--%</span></div>
                         <div>🔥 Sensación Térmica: <span id="sensaciontermica">--°C</span></div>
@@ -484,7 +483,7 @@
                     </div>
                     
                     <div class="location-presets" id="locationPresets">
-                        <!-- Los presets se generarán dinámicamente -->
+                        
                     </div>
                     
                     <div class="config-item">
@@ -631,7 +630,6 @@
     </div>
     
     <script type="module">
-        // Importaciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
         import { 
@@ -661,7 +659,6 @@
             measurementId: "G-1234567890"
         };
 
-        // Inicialización de Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
@@ -669,15 +666,13 @@
 
         console.log("🚀 Firebase inicializado correctamente");
 
-        // Variables globales
         let currentUserId;
         let sensorDataRef;
         let configRef;
-        let arduinoConfigRef; // Nueva referencia para configuración de Arduino
+        let arduinoConfigRef;
         let currentFanMode = 'auto';
         let autoControlInterval;
 
-        // Presets de temperatura
         const locationPresets = {
             'home': { min: 20, max: 25, name: '🏠 Hogar', description: 'Temperatura confortable para vivir' },
             'cold-room': { min: -2, max: 4, name: '❄️ Cámara Fría', description: 'Conservación de alimentos perecederos' },
@@ -691,7 +686,6 @@
             'food-storage': { min: 5, max: 15, name: '🥫 Almacén de Alimentos', description: 'Conservación general de alimentos' }
         };
 
-        // Elementos del DOM
         const temperatureElement = document.getElementById('temperatura');
         const statusElement = document.getElementById('status');
         const fanIcon = document.getElementById('fanIcon');
@@ -715,11 +709,9 @@
         const manualFanBtn = document.getElementById('manualFanBtn');
         const locationPresetsContainer = document.getElementById('locationPresets');
         const arduinoStatusElement = document.getElementById('arduinoStatus');
-        // Nuevos elementos para humedad y sensación térmica
         const humedadElement = document.getElementById('humedad');
         const sensacionTermicaElement = document.getElementById('sensaciontermica');
 
-        // Función para inicializar Firebase
         async function initializeAuthAndRealtimeDB() {
             try {
                 await signInAnonymously(auth);
@@ -728,15 +720,12 @@
                 currentUserId = auth.currentUser.uid;
                 console.log("👤 User ID:", currentUserId);
                 
-                // Crear referencias a Firebase
                 sensorDataRef = ref(db, 'sensores/datosActuales');
                 configRef = ref(db, `configuraciones/${currentUserId}`);
                 arduinoConfigRef = ref(db, 'configuracion_arduino'); // Nueva referencia
                 
-                // Actualizar estado de conexión
                 updateConnectionStatus(true);
                 
-                // Cargar configuración inicial
                 await loadInitialConfig();
                 setupRealtimeListeners();
                 initializeLocationPresets();
@@ -749,7 +738,6 @@
             }
         }
 
-        // Función para actualizar estado de conexión
         function updateConnectionStatus(connected) {
             if (connected) {
                 connectionStatusElement.textContent = '🟢 Conectado';
@@ -764,7 +752,6 @@
             }
         }
 
-        // Función para mostrar alertas
         function showAlert(message) {
             alertElement.innerHTML = `⚠️ ${message}`;
             alertElement.style.display = 'block';
@@ -773,7 +760,6 @@
             }, 5000);
         }
 
-        // Inicializar presets de ubicación
         function initializeLocationPresets() {
             locationPresetsContainer.innerHTML = '';
             Object.entries(locationPresets).forEach(([key, preset]) => {
@@ -788,11 +774,10 @@
             });
         }
 
-        // Aplicar preset de ubicación
         async function applyLocationPreset(locationKey) {
             const preset = locationPresets[locationKey];
             if (preset) {
-                // Cargar configuración guardada
+    
                 const savedConfig = await loadLocationConfig(locationKey);
                 
                 if (savedConfig) {
@@ -805,18 +790,15 @@
                 
                 locationSelect.value = locationKey;
                 
-                // Actualizar estado visual
                 document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.closest('.preset-btn').classList.add('active');
                 
-                // Guardar automáticamente
                 await saveTemperatureParams();
                 
                 showAlert(`Configuración cargada para ${preset.name}: ${minTempInput.value}°C - ${maxTempInput.value}°C`);
             }
         }
 
-        // Cargar configuración de ubicación
         async function loadLocationConfig(locationKey) {
             if (!configRef) return null;
             
@@ -832,21 +814,17 @@
             return null;
         }
 
-        // Función para actualizar UI con los datos
         function updateUI(sensorData, configData) {
-            // Combinar datos de forma segura
             const data = {
                 ...(sensorData || {}),
                 ...(configData || {})
             };
 
-            // Actualizar temperatura - CORRECCIÓN: Verificar correctamente los datos
             const currentTemp = data.temperatura !== undefined && data.temperatura !== null 
                 ? data.temperatura 
                 : '--';
             temperatureElement.textContent = `${currentTemp}°C`;
             
-            // Actualizar humedad y sensación térmica - CORRECCIÓN: Verificar datos
             humedadElement.textContent = data.humedad !== undefined && data.humedad !== null 
                 ? `${data.humedad}%` 
                 : '--%';
@@ -854,7 +832,6 @@
                 ? `${data.sensaciontermica}°C` 
                 : '--°C';
             
-            // Cargar configuración de ubicación
             const currentLocation = data.location || 'home';
             const locationConfigs = data.locationConfigs || {};
             const locationConfig = locationConfigs[currentLocation];
@@ -864,7 +841,6 @@
                 minTemp = locationConfig.min;
                 maxTemp = locationConfig.max;
             } else {
-                // Usar preset por defecto si no hay configuración
                 const preset = locationPresets[currentLocation];
                 minTemp = preset ? preset.min : 20;
                 maxTemp = preset ? preset.max : 25;
@@ -872,15 +848,12 @@
             
             updateTemperatureStatus(currentTemp, minTemp, maxTemp);
 
-            // Actualizar estado del ventilador
             const fanOn = data.ventiladorOn !== undefined ? data.ventiladorOn : false;
             updateFanDisplay(fanOn);
 
-            // Actualizar modo del ventilador
             currentFanMode = data.fanMode || 'auto';
             updateFanModeDisplay();
 
-            // Actualizar parámetros de configuración
             minTempInput.value = minTemp;
             maxTempInput.value = maxTemp;
             locationSelect.value = currentLocation;
@@ -888,11 +861,9 @@
             displayMinTemp.textContent = minTemp;
             displayMaxTemp.textContent = maxTemp;
 
-            // Actualizar ubicación actual
             const locationName = locationPresets[currentLocation]?.name || '🏠 Hogar';
             currentLocationElement.textContent = locationName;
 
-            // Actualizar última actualización
             if (data.lastUpdate) {
                 const date = new Date(data.lastUpdate);
                 lastUpdateElement.textContent = date.toLocaleString();
@@ -900,20 +871,16 @@
                 lastUpdateElement.textContent = 'N/A';
             }
 
-            // Actualizar lista de WiFi
             const wifiNetworks = data.wifiNetworks || [];
             renderWifiList(wifiNetworks);
 
-            // Control automático del ventilador
             if (currentFanMode === 'auto' && currentTemp !== '--') {
                 autoFanControl(parseFloat(currentTemp), minTemp, maxTemp);
             }
 
-            // Actualizar preset activo
             updateActivePreset(currentLocation);
         }
 
-        // Restablecer UI a valores por defecto
         function resetUIToDefault() {
             temperatureElement.textContent = '--°C';
             statusElement.textContent = 'Sin datos';
@@ -932,7 +899,6 @@
             alertElement.style.display = 'none';
         }
 
-        // Actualizar estado de temperatura
         function updateTemperatureStatus(temp, min, max) {
             statusElement.classList.remove('status-normal', 'status-cooling', 'status-warning', 'status-critical');
 
@@ -966,7 +932,6 @@
             }
         }
 
-        // Actualizar display del ventilador
         function updateFanDisplay(fanOn) {
             if (fanOn) {
                 fanIcon.classList.remove('fan-off');
@@ -979,7 +944,6 @@
             }
         }
 
-        // Actualizar display del modo del ventilador
         function updateFanModeDisplay() {
             if (currentFanMode === 'auto') {
                 fanModeElement.textContent = '🤖 Modo: Automático';
@@ -988,7 +952,6 @@
                 manualFanBtn.disabled = true;
                 manualFanBtn.textContent = 'Control Manual';
                 
-                // Actualizar botones de modo
                 document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
                 document.querySelector('.mode-btn[onclick="setFanMode(\'auto\')"]').classList.add('active');
             } else {
@@ -998,13 +961,11 @@
                 manualFanBtn.disabled = false;
                 manualFanBtn.textContent = 'Control Manual';
                 
-                // Actualizar botones de modo
                 document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
                 document.querySelector('.mode-btn[onclick="setFanMode(\'manual\')"]').classList.add('active');
             }
         }
 
-        // Actualizar preset activo
         function updateActivePreset(currentLocation) {
             document.querySelectorAll('.preset-btn').forEach((btn, index) => {
                 btn.classList.remove('active');
@@ -1014,14 +975,12 @@
             });
         }
 
-        // Control automático del ventilador
         function autoFanControl(currentTemp, minTemp, maxTemp) {
             if (currentFanMode !== 'auto' || !sensorDataRef) return;
 
             const shouldTurnOn = currentTemp >= maxTemp;
             const shouldTurnOff = currentTemp <= minTemp;
 
-            // Solo actualizar si hay un cambio necesario
             get(sensorDataRef).then(snapshot => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
@@ -1049,7 +1008,6 @@
             });
         }
 
-        // Iniciar control automático
         function startAutoControl() {
             autoControlInterval = setInterval(() => {
                 if (currentFanMode === 'auto' && sensorDataRef) {
@@ -1066,7 +1024,6 @@
             }, 10000);
         }
 
-        // Renderizar lista de WiFi
         function renderWifiList(wifiNetworks) {
             wifiListElement.innerHTML = '';
             if (!wifiNetworks || wifiNetworks.length === 0) {
@@ -1087,14 +1044,11 @@
             }
         }
 
-        // Cargar configuración inicial
         async function loadInitialConfig() {
             try {
-                // Cargar datos del sensor
                 const sensorSnapshot = await get(sensorDataRef);
                 const sensorData = sensorSnapshot.exists() ? sensorSnapshot.val() : {};
                 
-                // Cargar configuración
                 const configSnapshot = await get(configRef);
                 let configData = {};
                 
@@ -1115,7 +1069,6 @@
                     await set(configRef, configData);
                 }
                 
-                // Actualizar UI con los datos - CORRECCIÓN: Pasar ambos objetos
                 updateUI(sensorData, configData);
             } catch (error) {
                 console.error("❌ Error al cargar configuración inicial:", error);
@@ -1124,23 +1077,20 @@
             }
         }
 
-        // Configurar listeners en tiempo real
         function setupRealtimeListeners() {
-            // Listener para datos del sensor
             onValue(sensorDataRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const sensorData = snapshot.val();
                     console.log("🔄 Actualización de sensor en tiempo real:", sensorData);
         
-                    // Obtener configuración actual
                     get(configRef).then(configSnapshot => {
                         const configData = configSnapshot.exists() ? configSnapshot.val() : {};
-                        updateUI(sensorData, configData); // CORRECCIÓN: Pasar ambos objetos
+                        updateUI(sensorData, configData);
                         updateConnectionStatus(true);
                     });
                 } else {
                     console.log("📭 Datos de sensor no disponibles");
-                    updateUI({}, {}); // CORRECCIÓN: Pasar objetos vacíos
+                    updateUI({}, {});
                     updateConnectionStatus(false);
                 }
             }, (error) => {
@@ -1149,7 +1099,6 @@
                 showAlert(`Error en actualización de sensor: ${error.message}`);
             });
 
-            // Listener para configuración
             onValue(configRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const configData = snapshot.val();
@@ -1158,12 +1107,12 @@
                     // Obtener datos de sensor actuales
                     get(sensorDataRef).then(sensorSnapshot => {
                         const sensorData = sensorSnapshot.exists() ? sensorSnapshot.val() : {};
-                        updateUI(sensorData, configData); // CORRECCIÓN: Pasar ambos objetos
+                        updateUI(sensorData, configData);
                         updateConnectionStatus(true);
                     });
                 } else {
                     console.log("📭 Configuración no disponible");
-                    updateUI({}, {}); // CORRECCIÓN: Pasar objetos vacíos
+                    updateUI({}, {});
                     updateConnectionStatus(false);
                 }
             }, (error) => {
@@ -1173,7 +1122,6 @@
             });
         }
 
-        // Función para cambiar modo del ventilador
         window.setFanMode = async (mode) => {
             if (!configRef) return;
 
@@ -1183,8 +1131,7 @@
                     fanMode: mode,
                     lastUpdate: new Date().toISOString()
                 });
-                
-                // Actualizar también en el nodo de Arduino
+            
                 await update(arduinoConfigRef, {
                     modo: mode
                 });
@@ -1203,7 +1150,6 @@
             }
         };
 
-        // Función para alternar ventilador manualmente
         window.toggleFan = async () => {
             if (!sensorDataRef || currentFanMode === 'auto') return;
 
@@ -1225,7 +1171,6 @@
             }
         };
 
-        // Función para actualizar datos manualmente
         window.refreshData = async () => {
             if (!sensorDataRef) return;
 
@@ -1241,7 +1186,6 @@
             }
         };
 
-        // Función para guardar parámetros de temperatura
         async function saveTemperatureParams() {
             if (!configRef) return;
 
@@ -1255,14 +1199,12 @@
                     return;
                 }
 
-                // Obtener configuraciones existentes
                 const snapshot = await get(configRef);
                 let configData = {};
                 if (snapshot.exists()) {
                     configData = snapshot.val();
                 }
                 
-                // Actualizar configuración
                 const locationConfigs = configData.locationConfigs || {};
                 locationConfigs[location] = {
                     min: minTemp,
@@ -1276,7 +1218,6 @@
                     lastUpdate: new Date().toISOString()
                 });
                 
-                // Guardar también en el nodo de Arduino
                 await update(arduinoConfigRef, {
                     minTemp: minTemp,
                     maxTemp: maxTemp
@@ -1285,7 +1226,6 @@
                 console.log(`💾 Parámetros guardados para ${locationPresets[location]?.name}: ${minTemp}°C - ${maxTemp}°C`);
                 showAlert(`Configuración guardada para ${locationPresets[location]?.name}: ${minTemp}°C - ${maxTemp}°C`);
                 
-                // Actualizar estado de Arduino
                 arduinoStatusElement.textContent = '🟢 Configuración enviada';
                 arduinoStatusElement.style.color = '#4CAF50';
                 setTimeout(() => {
@@ -1299,7 +1239,6 @@
             }
         }
 
-        // Restablecer a valores por defecto
         window.resetToDefaults = async () => {
             if (!configRef) return;
 
@@ -1310,14 +1249,12 @@
                 minTempInput.value = preset.min;
                 maxTempInput.value = preset.max;
                 
-                // Obtener configuraciones existentes
                 const snapshot = await get(configRef);
                 let configData = {};
                 if (snapshot.exists()) {
                     configData = snapshot.val();
                 }
                 
-                // Restablecer configuración
                 const locationConfigs = configData.locationConfigs || {};
                 locationConfigs[location] = {
                     min: preset.min,
@@ -1331,7 +1268,6 @@
                     lastUpdate: new Date().toISOString()
                 });
                 
-                // Actualizar nodo de Arduino
                 await update(arduinoConfigRef, {
                     minTemp: preset.min,
                     maxTemp: preset.max,
@@ -1345,12 +1281,10 @@
             }
         };
 
-        // Escanear WiFi (simulado)
         window.scanWifi = () => {
             showAlert('Escaneando redes WiFi disponibles...');
         };
 
-        // Simular temperatura
         window.simulateTemperature = async () => {
             try {
                 const randomTemp = (Math.random() * 10 + 20).toFixed(1);
@@ -1365,10 +1299,8 @@
             }
         };
 
-        // Event Listeners
         document.getElementById('save-temp-params').addEventListener('click', saveTemperatureParams);
 
-        // Agregar red WiFi
         document.getElementById('add-wifi').addEventListener('click', async () => {
             if (!configRef) return;
 
@@ -1408,7 +1340,6 @@
             }
         });
 
-        // Eliminar red WiFi
         wifiListElement.addEventListener('click', async (event) => {
             if (!configRef || !event.target.classList.contains('btn-danger')) return;
 
@@ -1433,7 +1364,6 @@
             }
         });
 
-        // Mostrar ID de usuario
         onAuthStateChanged(auth, user => {
             if (user) {
                 displayUserIdElement.textContent = user.uid.substring(0, 8) + '...';
@@ -1442,12 +1372,11 @@
             }
         });
 
-        // Actualizar al cambiar ubicación
         locationSelect.addEventListener('change', async () => {
             const selectedLocation = locationSelect.value;
             const preset = locationPresets[selectedLocation];
             if (preset) {
-                // Cargar configuración guardada
+                
                 const savedConfig = await loadLocationConfig(selectedLocation);
                 
                 if (savedConfig) {
@@ -1460,7 +1389,7 @@
                     showAlert(`Usando configuración por defecto para ${preset.name}: ${preset.min}°C - ${preset.max}°C`);
                 }
                 
-                // Actualizar ubicación en Firebase
+                
                 if (configRef) {
                     try {
                         await update(configRef, {
@@ -1468,7 +1397,7 @@
                             lastUpdate: new Date().toISOString()
                         });
                         
-                        // Actualizar también en el nodo de Arduino
+                        
                         await update(arduinoConfigRef, {
                             minTemp: minTempInput.value,
                             maxTemp: maxTempInput.value
@@ -1484,15 +1413,12 @@
                     }
                 }
                 
-                // Actualizar preset
                 updateActivePreset(selectedLocation);
             }
         });
 
-        // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', initializeAuthAndRealtimeDB);
 
-        // Limpiar intervalos al cerrar
         window.addEventListener('beforeunload', () => {
             if (autoControlInterval) {
                 clearInterval(autoControlInterval);
